@@ -5,6 +5,7 @@ import { NavigationItem } from '@/types/nav';
 import { useNavigationData } from '@/hooks/useNavigationData';
 import { NavigationSidebar } from './NavigationSidebar';
 import { CategorySection } from './CategorySection';
+import { SearchEngineMatrix } from './SearchEngineMatrix';
 import { BackToTop } from './BackToTop';
 import { CATEGORY_ICONS } from '@/lib/constants';
 
@@ -21,7 +22,8 @@ export default function SearchableNavigation({ items }: SearchableNavigationProp
   const {
     filteredGroups,
     allCategories,
-    categoryTree
+    categoryTree,
+    isShortcutMode // Added isShortcutMode
   } = useNavigationData(items, searchQuery);
 
   // 鼠标追踪效果 (节流优化：使用 RequestAnimationFrame)
@@ -86,10 +88,11 @@ export default function SearchableNavigation({ items }: SearchableNavigationProp
           <div className="absolute -inset-1 bg-gradient-to-r from-[--accent] via-[--secondary] to-[--accent] opacity-20 blur-xl rounded-full group-hover:opacity-40 transition duration-500 animate-pulse"></div>
           <input
             type="text"
-            placeholder="搜索星系 (e.g. AI, 设计...)"
+            placeholder={isShortcutMode ? "正在向全宇宙同步搜索..." : "搜索星系 (输入 / 开启全网探索...)"}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#0f172a]/70 backdrop-blur-xl text-white placeholder-gray-500 border border-white/10 rounded-full py-4 px-8 pr-16 text-lg focus:outline-none focus:border-[--accent]/50 focus:ring-2 focus:ring-[--accent]/20 transition-all shadow-2xl"
+            className={`w-full bg-[#0f172a]/70 backdrop-blur-xl text-white placeholder-gray-500 border rounded-full py-4 px-8 pr-16 text-lg focus:outline-none transition-all shadow-2xl
+              ${isShortcutMode ? 'border-[--accent] ring-2 ring-[--accent]/20 shadow-[0_0_30px_rgba(var(--accent-rgb),0.2)]' : 'border-white/10 focus:border-[--accent]/50'}`}
           />
           <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-3">
             {searchQuery && (
@@ -102,46 +105,60 @@ export default function SearchableNavigation({ items }: SearchableNavigationProp
                 </svg>
               </button>
             )}
-            <span className="text-xl grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500">🔭</span>
+            <span className={`text-xl transition-all duration-500 ${isShortcutMode ? 'scale-125 rotate-12 drop-shadow-[0_0_8px_var(--accent)]' : 'grayscale opacity-50'}`}>
+              {isShortcutMode ? '☄️' : '🔭'}
+            </span>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-10 mt-2 relative">
-        {/* 侧边层级导航 */}
-        <NavigationSidebar
-          categories={allCategories}
-          categoryTree={categoryTree}
-          activeCategory={activeCategory}
-          scrollToAnchor={scrollToAnchor}
-          getCategoryIcon={getCategoryIcon}
-        />
-
-        {/* 主内容区 */}
-        <div className="flex-1 space-y-20 min-h-[60vh]">
-          {!hasResults ? (
-            <div className="flex flex-col items-center justify-center py-32 text-gray-500">
-              <div className="text-6xl mb-6 grayscale opacity-50">🪐</div>
-              <p className="text-xl font-light">未观测到相关天体</p>
-              <button
-                onClick={() => setSearchQuery('')}
-                className="mt-6 px-6 py-2 rounded-full border border-white/10 text-sm hover:bg-white/5 transition-all text-[--accent-light]"
-              >
-                清除搜索结果
-              </button>
-            </div>
-          ) : (
-            Object.entries(filteredGroups).map(([primaryCategory, subGroups]) => (
-              <CategorySection
-                key={primaryCategory}
-                primaryCategory={primaryCategory}
-                subGroups={subGroups}
-                getCategoryIcon={getCategoryIcon}
-              />
-            ))
-          )}
+      {isShortcutMode ? (
+        /* Shortcut Mode: Only Show Search Engine Matrix */
+        <div className="min-h-[50vh] flex flex-col items-center">
+          <SearchEngineMatrix query={searchQuery} isShortcutMode={true} />
         </div>
-      </div>
+      ) : (
+        /* Normal Mode: Sidebar + Content */
+        <div className="flex flex-col lg:flex-row gap-10 mt-2 relative">
+          {/* 侧边层级导航 */}
+          <NavigationSidebar
+            categories={allCategories}
+            categoryTree={categoryTree}
+            activeCategory={activeCategory}
+            scrollToAnchor={scrollToAnchor}
+            getCategoryIcon={getCategoryIcon}
+          />
+
+          {/* 主内容区 */}
+          <div className="flex-1 space-y-20 min-h-[60vh]">
+            {!hasResults ? (
+              <div className="flex flex-col items-center justify-center py-20 animate-in fade-in duration-700">
+                <div className="text-6xl mb-6 grayscale opacity-50">🪐</div>
+                <p className="text-xl font-light text-gray-400">本地未观测到相关天体</p>
+                <p className="text-sm text-gray-600 mt-2 mb-10">或许这些深空入口能帮到你：</p>
+
+                <SearchEngineMatrix query={searchQuery} />
+
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="mt-12 px-8 py-2 rounded-full border border-white/10 text-xs hover:bg-white/5 transition-all text-gray-500 uppercase tracking-widest"
+                >
+                  重置本地扫描
+                </button>
+              </div>
+            ) : (
+              Object.entries(filteredGroups).map(([primaryCategory, subGroups]) => (
+                <CategorySection
+                  key={primaryCategory}
+                  primaryCategory={primaryCategory}
+                  subGroups={subGroups}
+                  getCategoryIcon={getCategoryIcon}
+                />
+              ))
+            )}
+          </div>
+        </div>
+      )}
 
       <BackToTop />
     </div>

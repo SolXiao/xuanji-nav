@@ -4,6 +4,8 @@ import NetworkStatus from '@/components/NetworkStatus';
 import AddItemButton from '@/components/AddItemButton';
 import { NavigationItem } from '@/types/nav';
 
+export const revalidate = 0; // 禁用静态缓存，确保部署后数据实时更新
+
 export default async function Home() {
   const items = await getDatabase();
 

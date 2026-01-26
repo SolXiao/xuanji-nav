@@ -2,8 +2,14 @@ import { useMemo } from 'react';
 import { NavigationItem } from '@/types/nav';
 
 export function useNavigationData(items: NavigationItem[], searchQuery: string) {
+  // 是否处于外部搜索模式 (以 / 开头)
+  const isShortcutMode = searchQuery.startsWith('/');
+
   // 1. 搜索过滤逻辑
   const matchedItems = useMemo(() => {
+    // 如果是快捷指令模式，为了性能和 UI 清晰，不返回本地匹配结果
+    if (isShortcutMode) return [];
+
     const query = searchQuery.toLowerCase();
     if (!query) return items;
 
@@ -14,7 +20,7 @@ export function useNavigationData(items: NavigationItem[], searchQuery: string) 
       item.category.toLowerCase().includes(query) ||
       (item.subCategory && item.subCategory.toLowerCase().includes(query))
     );
-  }, [items, searchQuery]);
+  }, [items, searchQuery, isShortcutMode]);
 
   // 2. 嵌套分组逻辑: { [primaryCategory]: { [subCategory || 'default']: NavigationItem[] } }
   const filteredGroups = useMemo(() => {
@@ -55,6 +61,7 @@ export function useNavigationData(items: NavigationItem[], searchQuery: string) 
     matchedItems,
     filteredGroups,
     allCategories,
-    categoryTree
+    categoryTree,
+    isShortcutMode
   };
 }
