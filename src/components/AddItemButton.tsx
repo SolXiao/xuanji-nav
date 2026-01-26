@@ -308,9 +308,16 @@ export default function AddItemButton({ existingCategories = [] }: AddItemButton
                       <button
                         onClick={handleSubmit}
                         disabled={loading}
-                        className="flex-1 py-4 rounded-xl bg-gradient-to-r from-[--accent] to-[--accent-light] text-[--primary-dark] font-bold hover:shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)] disabled:opacity-50 transition-all active:scale-95"
+                        className="flex-1 py-4 rounded-xl bg-gradient-to-r from-[--accent] to-[--accent-light] text-[--primary-dark] font-bold hover:shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)] disabled:opacity-50 transition-all active:scale-95 flex items-center justify-center gap-2"
                       >
-                        {loading ? '正在接入...' : '存入航图'}
+                        {loading ? (
+                          <>
+                            <div className="w-5 h-5 border-2 border-[--primary-dark] border-t-transparent rounded-full animate-spin"></div>
+                            <span>正在接入...</span>
+                          </>
+                        ) : (
+                          '存入航图'
+                        )}
                       </button>
                     </div>
                   </div>
