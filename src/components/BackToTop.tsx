@@ -27,7 +27,7 @@ export const BackToTop = () => {
 
   return (
     <div
-      className={`fixed bottom-10 right-10 z-[100] transition-all duration-500 transform ${isVisible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-10 opacity-0 scale-50 pointer-events-none'
+      className={`fixed bottom-32 right-10 z-[40] transition-all duration-500 transform ${isVisible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-10 opacity-0 scale-50 pointer-events-none'
         }`}
     >
       <button

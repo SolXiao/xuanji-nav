@@ -1,16 +1,18 @@
 import { useMemo } from 'react';
-import { NavigationItem } from '@/types/nav';
+import { NavigationItem, GroupedNavigationItems, CategoryTree } from '@/types/nav';
+import { SEARCH_ENGINES } from '@/lib/constants';
 
-export function useNavigationData(items: NavigationItem[], searchQuery: string) {
-  // 是否处于外部搜索模式 (以 / 开头)
-  const isShortcutMode = searchQuery.startsWith('/');
-
+export function useNavigationData(
+  items: NavigationItem[],
+  displayQuery: string,
+  isShortcutMode: boolean
+) {
   // 1. 搜索过滤逻辑
   const matchedItems = useMemo(() => {
-    // 如果是快捷指令模式，为了性能和 UI 清晰，不返回本地匹配结果
+    // 如果是快捷指令模式，且已经有了明确的显示内容，或者还没有内容但处于该模式，不返回本地匹配
     if (isShortcutMode) return [];
 
-    const query = searchQuery.toLowerCase();
+    const query = displayQuery.toLowerCase();
     if (!query) return items;
 
     return items.filter(item =>
@@ -20,11 +22,11 @@ export function useNavigationData(items: NavigationItem[], searchQuery: string) 
       item.category.toLowerCase().includes(query) ||
       (item.subCategory && item.subCategory.toLowerCase().includes(query))
     );
-  }, [items, searchQuery, isShortcutMode]);
+  }, [items, isShortcutMode, displayQuery]);
 
   // 2. 嵌套分组逻辑: { [primaryCategory]: { [subCategory || 'default']: NavigationItem[] } }
-  const filteredGroups = useMemo(() => {
-    const groups: Record<string, Record<string, NavigationItem[]>> = {};
+  const filteredGroups = useMemo<GroupedNavigationItems>(() => {
+    const groups: GroupedNavigationItems = {};
 
     matchedItems.forEach(item => {
       const primary = item.category;
@@ -49,8 +51,8 @@ export function useNavigationData(items: NavigationItem[], searchQuery: string) 
   }, [items]);
 
   // 4. 构建层级树结构 (用于侧边栏展开显示)
-  const categoryTree = useMemo(() => {
-    const tree: Record<string, string[]> = {};
+  const categoryTree = useMemo<CategoryTree>(() => {
+    const tree: CategoryTree = {};
     Object.entries(filteredGroups).forEach(([primary, subGroups]) => {
       tree[primary] = Object.keys(subGroups).filter(sub => sub !== 'default');
     });
@@ -61,7 +63,6 @@ export function useNavigationData(items: NavigationItem[], searchQuery: string) 
     matchedItems,
     filteredGroups,
     allCategories,
-    categoryTree,
-    isShortcutMode
+    categoryTree
   };
 }

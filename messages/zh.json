@@ -1,0 +1,77 @@
+{
+  "Navbar": {
+    "title": "璇玑导航",
+    "subtitle": "XUANJI_PROTO_V2",
+    "settings": "星盘设置",
+    "searchPlaceholder": "搜索..."
+  },
+  "Search": {
+    "placeholder": "搜索导航...",
+    "placeholderNormal": "🔭 探索星系 · 按 Tab 切换引擎 · 按 / 快速聚焦",
+    "placeholderShortcut": "🚀 正在全网进行 {engine} 探测...",
+    "noResults": "未找到相关结果",
+    "noResultsTitle": "本地未观测到相关天体",
+    "noResultsDesc": "\"{query}\" 可能存在于更广阔的全息星域中。请尝试使用快捷前缀或直接开启全网探测。",
+    "suggestedPaths": "建议探测路径",
+    "resetScanner": "重置本地扫描仪",
+    "clearSearch": "清除搜索",
+    "executeSearch": "执行搜索",
+    "searchWith": "使用 {engine} 搜索"
+  },
+  "Category": {
+    "all": "全部"
+  },
+  "AddItem": {
+    "buttonText": "添加星标",
+    "titleInput": "发现新星系",
+    "titlePreview": "星系档案确认",
+    "urlPlaceholder": "输入网址 (e.g. github.com)",
+    "urlHelper": "璇玑将探测站点元数据,并进行智能分类。",
+    "startExplore": "开始探索",
+    "scanning": "星系扫描中...",
+    "submitting": "正在接入...",
+    "submitButton": "存入航图",
+    "backButton": "返回",
+    "successTitle": "收录成功!",
+    "successDesc": "该星系已接入璇玑航图",
+    "errorInvalidUrl": "星系坐标格式不正确 (无效 URL)",
+    "errorFetchFailed": "接入失败,请手动修正",
+    "errorUnknown": "深空由于未知原因无法探测该站点",
+    "errorTitleRequired": "星系必须有个名字 (Title is required)",
+    "errorSubmitFailed": "通信中断,存入失败",
+    "labelTitle": "星系名称 (Title)",
+    "labelCategory": "主星系 (Category)",
+    "labelSubCategory": "子星系 (SubCategory)",
+    "labelDescription": "探测描述 (Description)",
+    "placeholderTitle": "站点名称",
+    "placeholderCategory": "主分类",
+    "placeholderSubCategory": "二级分类",
+    "placeholderDescription": "简短描述该星系"
+  },
+  "Footer": {
+    "copyright": "XuanJi Navigator © {year}",
+    "slogan": "璇玑 · 万物皆有坐标",
+    "syncStatus": "星图已实时同步",
+    "syncSource": "NOTION API",
+    "linkGuide": "用户指南",
+    "linkPrivacy": "隐私探测",
+    "linkAbout": "星向标"
+  },
+  "Empty": {
+    "title": "虚空之中,暂无星系",
+    "description": "请连接 Notion 数据库或检查配置"
+  },
+  "Settings": {
+    "title": "星盘设置",
+    "theme": "主题",
+    "language": "语言",
+    "about": "关于"
+  },
+  "Common": {
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "cancel": "取消",
+    "confirm": "确认"
+  }
+}

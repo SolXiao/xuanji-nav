@@ -1,0 +1,77 @@
+{
+  "Navbar": {
+    "title": "Xuanji Nav",
+    "subtitle": "XUANJI_PROTO_V2",
+    "settings": "Settings",
+    "searchPlaceholder": "Search..."
+  },
+  "Search": {
+    "placeholder": "Search navigation...",
+    "placeholderNormal": "🔭 Explore · Press Tab to switch engines · Press / to focus",
+    "placeholderShortcut": "🚀 Searching with {engine}...",
+    "noResults": "No results found",
+    "noResultsTitle": "No local results found",
+    "noResultsDesc": "\"{query}\" might exist in the broader web. Try using search engine prefixes or start a web search.",
+    "suggestedPaths": "Suggested Search Paths",
+    "resetScanner": "Reset Local Scanner",
+    "clearSearch": "Clear search",
+    "executeSearch": "Execute search",
+    "searchWith": "Search with {engine}"
+  },
+  "Category": {
+    "all": "All"
+  },
+  "AddItem": {
+    "buttonText": "Add Star",
+    "titleInput": "Discover New Site",
+    "titlePreview": "Confirm Site Info",
+    "urlPlaceholder": "Enter URL (e.g. github.com)",
+    "urlHelper": "Xuanji will fetch site metadata and suggest categories.",
+    "startExplore": "Start Exploring",
+    "scanning": "Scanning site...",
+    "submitting": "Submitting...",
+    "submitButton": "Add to Navigation",
+    "backButton": "Back",
+    "successTitle": "Success!",
+    "successDesc": "Site has been added to Xuanji Navigator",
+    "errorInvalidUrl": "Invalid URL format",
+    "errorFetchFailed": "Failed to fetch metadata, please enter manually",
+    "errorUnknown": "Unknown error occurred while fetching site",
+    "errorTitleRequired": "Title is required",
+    "errorSubmitFailed": "Failed to submit, please try again",
+    "labelTitle": "Title",
+    "labelCategory": "Category",
+    "labelSubCategory": "SubCategory",
+    "labelDescription": "Description",
+    "placeholderTitle": "Site name",
+    "placeholderCategory": "Main category",
+    "placeholderSubCategory": "Sub category",
+    "placeholderDescription": "Brief description"
+  },
+  "Footer": {
+    "copyright": "XuanJi Navigator © {year}",
+    "slogan": "Xuanji · Navigate Everything",
+    "syncStatus": "Synced with Notion",
+    "syncSource": "NOTION API",
+    "linkGuide": "User Guide",
+    "linkPrivacy": "Privacy",
+    "linkAbout": "About"
+  },
+  "Empty": {
+    "title": "No navigation items yet",
+    "description": "Please connect to Notion database or check configuration"
+  },
+  "Settings": {
+    "title": "Settings",
+    "theme": "Theme",
+    "language": "Language",
+    "about": "About"
+  },
+  "Common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm"
+  }
+}

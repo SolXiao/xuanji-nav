@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface NetworkData {
   ip: string;
-  network: string; // CIDR or Organization
+  network: string;
   version: string;
   city: string;
   region: string;
@@ -38,24 +38,67 @@ export default function NetworkStatus() {
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  const autoCloseTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const startAutoCloseTimer = (delay = 8000) => {
+    clearAutoCloseTimer();
+    autoCloseTimerRef.current = setTimeout(() => {
+      setExpanded(false);
+    }, delay);
+  };
+
+  const clearAutoCloseTimer = () => {
+    if (autoCloseTimerRef.current) {
+      clearTimeout(autoCloseTimerRef.current);
+      autoCloseTimerRef.current = null;
+    }
+  };
+
   const fetchData = async () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     setLoading(true);
+
+    // 设置请求超时 (10秒)
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
     try {
-      const res = await fetch('https://ipapi.co/json/');
+      const res = await fetch('https://ipapi.co/json/', { signal: controller.signal });
+      clearTimeout(timeoutId);
+
       if (!res.ok) throw new Error('API Error');
       const json = await res.json();
       setData(json);
-    } catch (error) {
-      console.error('Failed to fetch network info', error);
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.warn('Network fetch aborted or timed out');
+      } else {
+        console.error('Failed to fetch network info', error);
+      }
     } finally {
       setLoading(false);
+      // 如果是在展开状态下完成获取，重置自动关闭计时器
+      if (expanded) startAutoCloseTimer();
     }
   };
 
   useEffect(() => {
-    if (expanded && !data) {
-      fetchData();
+    if (expanded) {
+      if (!data) {
+        fetchData();
+      }
+      startAutoCloseTimer();
+    } else {
+      clearAutoCloseTimer();
     }
+
+    return () => clearAutoCloseTimer();
   }, [expanded, data]);
 
   const handleCopy = () => {
@@ -63,123 +106,76 @@ export default function NetworkStatus() {
       navigator.clipboard.writeText(data.ip);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      // 复制操作重置计时器
+      startAutoCloseTimer();
     }
   };
 
+  const toggleExpand = () => {
+    setExpanded(!expanded);
+  };
+
   return (
-    <div className="fixed bottom-4 left-4 z-50">
-      {/* Trigger Button */}
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className={`group flex items-center justify-center p-3 rounded-full backdrop-blur-md border transition-all duration-300 shadow-lg hover:scale-105 active:scale-95
-          ${expanded
-            ? 'bg-[--accent] border-[--accent] text-[--primary-dark]'
-            : 'bg-[#0f172a]/80 border-white/10 text-gray-300 hover:bg-white/10 hover:text-white'
-          }`}
-        title="网络检测"
-      >
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </button>
+    <div className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden mt-4">
+      {/* Header */}
+      <div className="px-4 py-3 border-b border-white/5 flex justify-between items-center bg-white/5">
+        <h3 className="font-bold text-white flex items-center gap-2 text-xs uppercase tracking-widest">
+          网络坐标分析
+        </h3>
+        {loading && <div className="w-3 h-3 border-2 border-[--accent] border-t-transparent rounded-full animate-spin"></div>}
+      </div>
 
-      {/* Expanded Panel */}
-      {expanded && (
-        <div className="absolute bottom-16 left-0 w-80 bg-[#0f172a]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-5 fade-in duration-300">
-          {/* Header */}
-          <div className="px-5 py-4 border-b border-white/5 flex justify-between items-center bg-white/5">
-            <h3 className="font-bold text-white flex items-center gap-2">
-              <span className="text-xl">🌐</span> 网络检测
-            </h3>
+      <div className="p-4 space-y-4">
+        {loading && !data ? (
+          <div className="flex flex-col items-center justify-center py-6 text-gray-400 space-y-2">
+            <div className="w-5 h-5 border-2 border-[--accent] border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-[10px] uppercase tracking-tighter">正在探测...</span>
+          </div>
+        ) : data ? (
+          <>
+            {/* IP Section */}
+            <div className="space-y-1.5">
+              <div className="text-[9px] text-gray-500 uppercase font-bold tracking-[0.2em]">IPv4 公网星位</div>
+              <div className="bg-black/20 rounded-xl p-3 border border-white/5 flex items-center justify-between hover:border-[--accent]/30 transition-colors">
+                <span className="font-mono text-base text-[--accent] font-bold tracking-wider">{data.ip}</span>
+                <button
+                  onClick={handleCopy}
+                  className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-gray-500 hover:text-white"
+                >
+                  {copied ? (
+                    <span className="text-green-400 text-[9px] font-bold">已同步</span>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* ISP & Location */}
+            <div className="grid grid-cols-1 gap-3 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 text-[10px]">服务商</span>
+                <span className="text-gray-300 font-medium">{data.org}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 text-[10px]">地理归属</span>
+                <span className="text-gray-300 font-medium truncate max-w-[140px]">{data.city}, {data.country_code}</span>
+              </div>
+            </div>
+
             <button
-              onClick={() => setExpanded(false)}
-              className="text-gray-500 hover:text-white transition-colors"
+              onClick={fetchData}
+              className="w-full py-2 bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 text-[9px] text-gray-500 uppercase tracking-widest transition-all active:scale-95"
             >
-              ✕
+              重新扫描坐标
             </button>
+          </>
+        ) : (
+          <div className="text-center text-red-500 text-[10px] py-4 bg-red-500/5 rounded-xl border border-red-500/10">
+            无法连接至基站，<button onClick={fetchData} className="underline text-red-400">重试</button>
           </div>
-
-          <div className="p-5 space-y-6">
-            {loading ? (
-              <div className="flex flex-col items-center justify-center py-8 text-gray-400 space-y-3">
-                <div className="w-6 h-6 border-2 border-[--accent] border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-xs">正在分析星际坐标...</span>
-              </div>
-            ) : data ? (
-              <>
-                {/* IP Section */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs text-gray-400">
-                    <span className="flex items-center gap-1">📋 IPv4 公网IP</span>
-                    <a href="https://www.google.com/search?q=how+to+hide+my+ip" target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-[--accent] transition-colors cursor-pointer">
-                      <span>🕵️ 如何隐藏真实IP❓</span>
-                    </a>
-                  </div>
-                  <div className="group relative bg-black/20 rounded-xl p-3 border border-white/5 flex items-center justify-between hover:border-[--accent]/30 transition-colors">
-                    <span className="font-mono text-xl text-[--accent] font-bold tracking-wider">{data.ip}</span>
-                    <button
-                      onClick={handleCopy}
-                      className="p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white"
-                      title="复制IP"
-                    >
-                      {copied ? (
-                        <span className="text-green-400 text-xs font-bold">已复制</span>
-                      ) : (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                      )}
-                    </button>
-                  </div>
-                  <div className="flex justify-end">
-                    <a href="https://scamalytics.com/ip" target="_blank" rel="noreferrer" className="text-[10px] text-gray-500 hover:text-red-400 flex items-center gap-1 transition-colors">
-                      🛡️ 检查IP风险值 <span className="text-xs">→</span>
-                    </a>
-                  </div>
-                </div>
-
-                {/* ISP Section */}
-                <div className="space-y-1">
-                  <div className="text-xs text-gray-400 flex items-center gap-1">🔌 网络服务商</div>
-                  <div className="text-sm text-white font-medium pl-1">{data.org}</div>
-                </div>
-
-                {/* Location Section */}
-                <div className="space-y-1">
-                  <div className="text-xs text-gray-400 flex items-center gap-1">📍 位置 (IP归属地)</div>
-                  <div className="text-sm text-white font-medium pl-1">
-                    {data.country_name} · {data.region} · {data.city}
-                  </div>
-                  <div className="pt-1">
-                    <a href="https://www.ipdatacloud.com/" target="_blank" rel="noreferrer" className="inline-block text-[10px] text-[--accent] opacity-60 hover:opacity-100 transition-opacity bg-[--accent]/10 px-2 py-0.5 rounded-full">
-                      高精归属地定位（IP数据云）
-                    </a>
-                  </div>
-                </div>
-
-                {/* Coordinate Grid */}
-                <div className="grid grid-cols-2 gap-4 pt-2">
-                  <div className="bg-white/5 rounded-lg p-2 border border-white/5">
-                    <div className="text-[10px] text-gray-400 mb-1 flex items-center gap-1">🌍 经度</div>
-                    <div className="font-mono text-xs text-gray-200">{data.longitude}</div>
-                  </div>
-                  <div className="bg-white/5 rounded-lg p-2 border border-white/5">
-                    <div className="text-[10px] text-gray-400 mb-1 flex items-center gap-1">🧭 纬度</div>
-                    <div className="font-mono text-xs text-gray-200">{data.latitude}</div>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="text-center text-red-400 text-xs py-4">
-                无法探测到信号，请检查网络设置。
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

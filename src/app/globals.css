@@ -1,28 +1,5 @@
 @import "tailwindcss";
 
-:root {
-  /* 主色 - 深邃星空蓝 */
-  --primary: #1a237e;
-  --primary-light: #534bae;
-  --primary-dark: #000051;
-
-  /* 辅色 - 星光金 */
-  --accent: #ffd700;
-  --accent-rgb: 255, 215, 0;
-  --accent-light: #ffed4e;
-  --accent-dark: #c7a600;
-
-  /* 点缀 - 紫罗兰 */
-  --secondary: #7c4dff;
-
-  /* 背景 - 夜空渐变 (Fallback) */
-  --bg-starry: #0f2027;
-
-  /* 文字颜色 */
-  --foreground: #ffffff;
-  --background: #0f2027;
-}
-
 @theme {
   --color-primary: var(--primary);
   --color-primary-light: var(--primary-light);
@@ -33,23 +10,22 @@
   --color-accent-dark: var(--accent-dark);
 
   --color-secondary: var(--secondary);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
 
-  --font-sans: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
-
-  --animate-twinkle: twinkle 3s ease-in-out infinite;
+  --animate-spin-slow: spin 3s linear infinite;
+  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-shimmer: shimmer 2s linear infinite;
   --animate-float: float 6s ease-in-out infinite;
+  --animate-twinkle: twinkle 3s ease-in-out infinite;
 
-  @keyframes twinkle {
-
-    0%,
-    100% {
-      opacity: 0.5;
-      transform: scale(1);
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%)
     }
 
-    50% {
-      opacity: 1;
-      transform: scale(1.2);
+    100% {
+      transform: translateX(100%)
     }
   }
 
@@ -57,95 +33,314 @@
 
     0%,
     100% {
-      transform: translateY(0);
+      transform: translateY(0)
     }
 
     50% {
-      transform: translateY(-10px);
+      transform: translateY(-10px)
+    }
+  }
+
+  @keyframes twinkle {
+
+    0%,
+    100% {
+      opacity: 0.5;
+      transform: scale(1)
+    }
+
+    50% {
+      opacity: 1;
+      transform: scale(1.2)
     }
   }
 }
 
+:root {
+  --primary-dark: #0a0e1a;
+  --secondary-dark: #1a1f35;
+  --bg-starry: #0a0e1a;
+  /* Simplified fallback */
+  --accent: #ff79c6;
+  --accent-light: #ff92d0;
+  --foreground: #f8f8f2;
+}
+
+/* Hard Reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
 body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background-color: var(--primary-dark);
   color: var(--foreground);
-  background: #0b0e14;
-  /* 基础底色 */
-  background-image:
-    radial-gradient(circle at 20% 30%, rgba(124, 77, 255, 0.05) 0%, transparent 40%),
-    radial-gradient(circle at 80% 70%, rgba(255, 215, 0, 0.05) 0%, transparent 40%),
-    linear-gradient(to bottom, #0f2027, #152a35, #0b0e14);
-  background-attachment: fixed;
-  font-family: var(--font-sans);
-  min-height: 100vh;
-  position: relative;
-  overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background-image:
-    radial-gradient(1px 1px at 20px 30px, #fff, rgba(0, 0, 0, 0)),
-    radial-gradient(1px 1px at 40px 70px, #fff, rgba(0, 0, 0, 0)),
-    radial-gradient(2px 2px at 50px 160px, #fff, rgba(0, 0, 0, 0)),
-    radial-gradient(2px 2px at 90px 40px, #fff, rgba(0, 0, 0, 0)),
-    radial-gradient(1px 1px at 130px 80px, #fff, rgba(0, 0, 0, 0)),
-    radial-gradient(2px 2px at 160px 120px, #ddd, rgba(0, 0, 0, 0));
-  background-repeat: repeat;
-  background-size: 200px 200px;
-  opacity: 0.15;
-  animation: bg-drift 120s linear infinite;
+/* Utility for hiding scrollbars */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
-@keyframes bg-drift {
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: var(--accent);
+}
+
+/* Background Animation */
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Pulse animation for active indicators */
+@keyframes pulse-slow {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Gradient Animation */
+@keyframes gradient-shift {
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+/* Glow Pulse Effect */
+@keyframes glow-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(255, 121, 198, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 40px rgba(255, 121, 198, 0.6);
+  }
+}
+
+.glow-pulse {
+  animation: glow-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Shimmer Effect */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(to right, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
+  background-size: 1000px 100%;
+  animation: shimmer 3s infinite;
+}
+
+/* Rotate Animation */
+@keyframes rotate-slow {
   from {
-    background-position: 0 0;
+    transform: rotate(0deg);
   }
 
   to {
-    background-position: 200px 400px;
+    transform: rotate(360deg);
   }
 }
 
-/* 高级视觉组件 */
-.glow-card {
-  position: relative;
-  overflow: hidden;
+.animate-rotate-slow {
+  animation: rotate-slow 10s linear infinite;
 }
 
-.glow-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(var(--accent-rgb), 0.15) 0%, transparent 60%);
-  opacity: 0;
-  transition: opacity 0.3s;
-  pointer-events: none;
+/* 定制滚动条样式 */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-.glow-card:hover::before {
-  opacity: 1;
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
+.scrollbar-thin::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
+.scrollbar-thin::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  border-radius: 3px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: var(--accent);
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
-.text-shadow-glow {
-  text-shadow: 0 0 20px rgba(var(--accent-rgb), 0.5);
+/* 卡片悬停效果 */
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* Backdrop Blur Support */
+@supports ((-webkit-backdrop-filter: none) or (backdrop-filter: none)) {
+  .glass {
+    background-color: rgba(255, 255, 255, 0.05);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+  }
+}
+
+/* Text Gradient */
+.text-gradient {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Enhanced Searchbar */
+.search-glow:focus-within {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* Tooltip Animation */
+@keyframes tooltip-appear {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tooltip {
+  animation: tooltip-appear 0.2s ease-out;
+}
+
+/* Link Card Shine Effect on Hover */
+@keyframes card-shine {
+  0% {
+    left: -100%;
+  }
+
+  100% {
+    left: 100%;
+  }
+}
+
+.link-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s;
+}
+
+.link-card:hover::before {
+  left: 100%;
+}
+
+/* 修复浏览器自动完成下拉菜单的深色主题 */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #1e293b inset !important;
+  -webkit-text-fill-color: white !important;
+  caret-color: white !important;
+}
+
+select,
+input[list] {
+  color-scheme: dark;
+}
+
+/* 隐藏水平滚动条但保持滚动功能 */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* 平滑滚动 */
+html {
+  scroll-behavior: smooth;
+}
+
+/* 慢速旋转动画 - 用于齿轮图标 */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
 }

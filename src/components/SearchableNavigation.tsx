@@ -1,32 +1,93 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { NavigationItem } from '@/types/nav';
+import { NavigationItem, CategoryTree, GroupedNavigationItems } from '@/types/nav';
 import { useNavigationData } from '@/hooks/useNavigationData';
+import { useScrollSpy } from '@/hooks/useScrollSpy';
+import { useSearch } from '@/context/SearchContext';
 import { NavigationSidebar } from './NavigationSidebar';
 import { CategorySection } from './CategorySection';
+import { ContentResults } from './ContentResults';
 import { SearchEngineMatrix } from './SearchEngineMatrix';
 import { BackToTop } from './BackToTop';
-import { CATEGORY_ICONS } from '@/lib/constants';
+import { CATEGORY_ICONS, SEARCH_ENGINES } from '@/lib/constants';
+import { EmptyState } from './EmptyState';
+import { FloatingActionButton } from './FloatingActionButton';
+import { AddLinkModal } from './Modals/AddLinkModal';
+import { saveLocalLink, getCachedLinks, deleteLocalLink } from '@/lib/storage/indexeddb';
+import { toast } from 'sonner';
+import { ConfirmModal } from './Modals/ConfirmModal';
 
 interface SearchableNavigationProps {
   items: NavigationItem[];
 }
 
-export default function SearchableNavigation({ items }: SearchableNavigationProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+export default function SearchableNavigation({ items = [] }: SearchableNavigationProps) {
+  const [localItems, setLocalItems] = useState<NavigationItem[]>([]);
+  const [mergedItems, setMergedItems] = useState<NavigationItem[]>(items);
+
+  // Use Context for search state
+  const { searchQuery, isShortcutMode, engineId, displayQuery, setSearchQuery } = useSearch();
+
   const [activeCategory, setActiveCategory] = useState<string>('');
+  const [activeSearchCategory, setActiveSearchCategory] = useState('All'); // For SearchEngineMatrix
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  // 初始化加载本地数据并合并
+  useEffect(() => {
+    const loadLocalData = async () => {
+      try {
+        const local = await getCachedLinks();
+        setLocalItems(local);
+      } catch (e) {
+        console.error('Failed to load local links', e);
+      }
+    };
+    loadLocalData();
+  }, []);
+
+  // 当 items 或 localItems 变化时更新合并列表
+  useEffect(() => {
+    const notionIds = new Set(items.map(i => i.id));
+    const uniqueLocal = localItems.filter(i => !notionIds.has(i.id));
+    setMergedItems([...items, ...uniqueLocal]);
+  }, [items, localItems]);
+
   const mousePosRef = useRef({ x: 0, y: 0 });
   const rafIdRef = useRef<number | null>(null);
 
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; itemId: string | null }>({
+    isOpen: false,
+    itemId: null
+  });
+
+  // 删除本地项
+  const handleDeleteRequest = (id: string) => {
+    setConfirmModal({ isOpen: true, itemId: id });
+  };
+
+  const confirmDelete = async () => {
+    if (confirmModal.itemId) {
+      try {
+        await deleteLocalLink(confirmModal.itemId);
+        setLocalItems(prev => prev.filter(item => item.id !== confirmModal.itemId));
+        toast.success('星标已移除');
+      } catch (e) {
+        toast.error('移除失败');
+      } finally {
+        setConfirmModal({ isOpen: false, itemId: null });
+      }
+    }
+  };
+
+  // 2. 获取过滤后的导航数据
   const {
     filteredGroups,
     allCategories,
     categoryTree,
-    isShortcutMode // Added isShortcutMode
-  } = useNavigationData(items, searchQuery);
+  } = useNavigationData(mergedItems, displayQuery, isShortcutMode);
 
-  // 鼠标追踪效果 (节流优化：使用 RequestAnimationFrame)
+  // 鼠标追踪效果
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       mousePosRef.current = { x: e.clientX, y: e.clientY };
@@ -62,13 +123,26 @@ export default function SearchableNavigation({ items }: SearchableNavigationProp
     }
   };
 
+  // 实现 Scroll-Spy (自动跟踪激活分类)
+  const scrolledCategory = useScrollSpy('.category-section-wrapper', {
+    root: null,
+    rootMargin: '-150px 0px -70% 0px',
+    threshold: 0
+  }, isShortcutMode);
+
+  useEffect(() => {
+    if (scrolledCategory) {
+      setActiveCategory(scrolledCategory);
+    }
+  }, [scrolledCategory]);
+
   const getCategoryIcon = (cat: string) => {
     if (CATEGORY_ICONS[cat]) return CATEGORY_ICONS[cat];
     const key = Object.keys(CATEGORY_ICONS).find(k => cat.includes(k));
     return key ? CATEGORY_ICONS[key] : '📂';
   };
 
-  if (items.length === 0) {
+  if (mergedItems.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-12 rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 shadow-2xl min-h-[400px]">
         <div className="animate-spin text-6xl mb-6 opacity-80">🌌</div>
@@ -81,47 +155,29 @@ export default function SearchableNavigation({ items }: SearchableNavigationProp
   const hasResults = Object.keys(filteredGroups).length > 0;
 
   return (
-    <div className="flex flex-col gap-10 w-full animate-in fade-in duration-700">
-      {/* 搜索框 */}
-      <div className="sticky top-6 z-40 w-full max-w-2xl mx-auto px-4 md:px-0">
-        <div className="relative group">
-          <div className="absolute -inset-1 bg-gradient-to-r from-[--accent] via-[--secondary] to-[--accent] opacity-20 blur-xl rounded-full group-hover:opacity-40 transition duration-500 animate-pulse"></div>
-          <input
-            type="text"
-            placeholder={isShortcutMode ? "正在向全宇宙同步搜索..." : "搜索星系 (输入 / 开启全网探索...)"}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className={`w-full bg-[#0f172a]/70 backdrop-blur-xl text-white placeholder-gray-500 border rounded-full py-4 px-8 pr-16 text-lg focus:outline-none transition-all shadow-2xl
-              ${isShortcutMode ? 'border-[--accent] ring-2 ring-[--accent]/20 shadow-[0_0_30px_rgba(var(--accent-rgb),0.2)]' : 'border-white/10 focus:border-[--accent]/50'}`}
-          />
-          <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-3">
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="p-1 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            )}
-            <span className={`text-xl transition-all duration-500 ${isShortcutMode ? 'scale-125 rotate-12 drop-shadow-[0_0_8px_var(--accent)]' : 'grayscale opacity-50'}`}>
-              {isShortcutMode ? '☄️' : '🔭'}
-            </span>
-          </div>
-        </div>
-      </div>
+    <div className="flex flex-col gap-10 md:gap-16 w-full animate-in fade-in duration-700">
 
       {isShortcutMode ? (
-        /* Shortcut Mode: Only Show Search Engine Matrix */
-        <div className="min-h-[50vh] flex flex-col items-center">
-          <SearchEngineMatrix query={searchQuery} isShortcutMode={true} />
+        /* Shortcut Mode: Centered Matrix */
+        <div className="min-h-[60vh] flex flex-col items-center justify-center gap-8">
+          <div className="w-full max-w-3xl mx-auto px-4 md:px-0">
+            {/* Removed SearchBar */}
+          </div>
+
+          <SearchEngineMatrix
+            query={displayQuery}
+            isShortcutMode={true}
+            activeEngineId={engineId || undefined}
+            activeCategory={activeSearchCategory}
+            onCategoryChange={setActiveSearchCategory}
+          />
         </div>
       ) : (
-        /* Normal Mode: Sidebar + Content */
-        <div className="flex flex-col lg:flex-row gap-10 mt-2 relative">
-          {/* 侧边层级导航 */}
+        /* Normal Mode: Grid Layout (Sidebar + Content) */
+        <div className="grid lg:grid-cols-[260px_1fr] gap-8 relative items-start">
+          {/* Sticky Sidebar */}
           <NavigationSidebar
+            items={mergedItems}
             categories={allCategories}
             categoryTree={categoryTree}
             activeCategory={activeCategory}
@@ -129,38 +185,50 @@ export default function SearchableNavigation({ items }: SearchableNavigationProp
             getCategoryIcon={getCategoryIcon}
           />
 
-          {/* 主内容区 */}
-          <div className="flex-1 space-y-20 min-h-[60vh]">
-            {!hasResults ? (
-              <div className="flex flex-col items-center justify-center py-20 animate-in fade-in duration-700">
-                <div className="text-6xl mb-6 grayscale opacity-50">🪐</div>
-                <p className="text-xl font-light text-gray-400">本地未观测到相关天体</p>
-                <p className="text-sm text-gray-600 mt-2 mb-10">或许这些深空入口能帮到你：</p>
-
-                <SearchEngineMatrix query={searchQuery} />
-
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="mt-12 px-8 py-2 rounded-full border border-white/10 text-xs hover:bg-white/5 transition-all text-gray-500 uppercase tracking-widest"
-                >
-                  重置本地扫描
-                </button>
-              </div>
-            ) : (
-              Object.entries(filteredGroups).map(([primaryCategory, subGroups]) => (
-                <CategorySection
-                  key={primaryCategory}
-                  primaryCategory={primaryCategory}
-                  subGroups={subGroups}
-                  getCategoryIcon={getCategoryIcon}
-                />
-              ))
-            )}
+          {/* Main Content Column */}
+          <div className="w-full min-w-0 space-y-8">
+            <ContentResults
+              filteredGroups={filteredGroups}
+              displayQuery={displayQuery}
+              getCategoryIcon={getCategoryIcon}
+              onDelete={handleDeleteRequest}
+              hasResults={hasResults}
+            />
           </div>
         </div>
       )}
 
       <BackToTop />
+
+      <FloatingActionButton onClick={() => setIsAddModalOpen(true)} />
+
+      <AddLinkModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSubmit={async (data) => {
+          try {
+            const newItem = {
+              ...data,
+              id: `local-${Date.now()}`,
+              createdAt: new Date().toISOString()
+            };
+            await saveLocalLink(newItem);
+            setLocalItems(prev => [...prev, newItem]);
+            toast.success('星标已点亮，已存入本地星图');
+          } catch (e) {
+            toast.error('点亮星标失败，请检查轨道');
+          }
+        }}
+      />
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmDelete}
+        title="移除星标"
+        description="确定要将此星标从您的本地星图中移除吗？此操作无法撤销。"
+        confirmText="确认移除"
+        isDestructive={true}
+      />
     </div>
   );
 }

@@ -1,28 +1,60 @@
-# 项目上下文
+# 璇玑导航 (XuanJi Navigator) 项目上下文
 
-## 项目基本信息
-- **项目名称**: 璇玑导航 (XuanJi Navigator)
-- **核心理念**: 基于 Notion 的现代化智能导航网站，如北斗指引，一键直达。
-- **当前状态**: 初期开发阶段。
-- **技术栈**: Next.js 16 (App Router) + React 19 + Tailwind CSS 4.
+## 1. 项目概述
+**璇玑导航**是基于 Notion 作为内容管理后台的现代化智能导航网站，取名自古代天文仪器"璇玑"。
+- **核心理念**: 精准如璇玑，快速如星光，璀璨如星辰，灵动如星轨。
+- **目标**: 提供美观、易用的星空主题导航界面，与 Notion 数据库无感同步。
 
-## 关键链接
-- **需求文档**: (见上文 v5.0 需求文档)
-- **工作区**: `d:\WorkSpace\xuanji-nav`
+## 2. 技术栈
+- **框架**: Next.js 16 (App Router)
+- **语言**: TypeScript 5
+- **UI**: React 19, Tailwind CSS 4
+- **组件库**: Sonner (Toast), NextTopLoader
+- **国际化**: next-intl
+- **数据源**: Notion API
 
-## 核心功能 (已实现)
-1. **Notion 集成**: 通过官方 API 实现了导航数据的远程同步与写入。
-2. **双层分类体系**: 支持“主成分-子分类”的层级结构，侧边栏具备展开/收起联动。
-3. **智能推断系统**: 在添加新站时，依据内置 Taxonomy 库自动建议最匹配的分类与子分类。
-4. **沉浸式交互**: 
-   - 具备 `requestAnimationFrame` 优化的鼠标追踪发光动效。
-   - 响应式侧边栏与锚点平滑滚动。
-   - 宇航员风格的“回到顶部”(BackToTop) 组件。
-5. **高内聚架构**: 抽离了 `useNavigationData` 逻辑钩子与 `lib/constants.ts` 静态配置。
+## 3. 项目结构 (目标)
+```
+xuanji-nav/
+├── src/
+│   ├── app/                    # Next.js App Router
+│   │   ├── [locale]/          # 国际化路由
+│   │   ├── api/               # API 路由
+│   │   ├── layout.tsx         # 根布局
+│   │   └── globals.css        # 全局样式
+│   ├── components/            # React 组件
+│   │   ├── AddItemButton.tsx  # 添加导航按钮
+│   │   ├── BackToTop.tsx      # 返回顶部
+│   │   ├── CategorySection.tsx # 分类区块
+│   │   ├── DateTimeWidget.tsx # 时间组件
+│   │   ├── NavigationCard.tsx # 导航卡片
+│   │   ├── NavigationSidebar.tsx # 侧边栏
+│   │   ├── SearchBar.tsx      # 智能搜索框
+│   │   ├── SearchEngineMatrix.tsx # 搜索引擎矩阵
+│   │   └── StatsPanel.tsx     # 统计面板
+│   ├── hooks/                 # 自定义 Hooks
+│   │   └── useNavigationData.ts # 导航数据逻辑
+│   ├── i18n/                  # 国际化配置
+│   │   ├── routing.ts         # 路由配置
+│   │   └── request.ts         # 请求配置
+│   ├── lib/                   # 工具库
+│   │   ├── constants.ts       # 常量定义
+│   │   ├── nav-utils.ts       # 导航工具函数
+│   │   ├── notion.ts          # Notion API 封装
+│   │   └── time-utils.ts      # 时间工具函数
+│   └── types/                 # TypeScript 类型定义
+│       └── nav.ts             # 导航类型
+├── messages/                  # 国际化翻译文件
+└── public/                    # 静态资源
+```
 
-## 当前任务 (优化阶段)
-- [x] 重构组件结构，提升代码可维护性。
-- [x] 修复数据链路，确保二级分类入库。
-- [x] 优化动效性能，减少资源占用。
-- [/] 完善全局错误处理与 Loading 态（增强感知）。
-- [ ] 导出配置功能 (可选)。
+## 4. 核心功能
+- **智能导航**: 双层分类，智能推断，多引擎搜索。
+- **数据同步**: Notion 无缝集成，支持导入导出，浏览器扩展同步。
+- **交互体验**: 沉浸式动效，响应式设计，快捷键系统。
+- **时间智能**: 实时时钟，迷你日历，时间统计。
+
+## 5. 开发规范
+- **语言**: 中文 (注释/文档), 英文 (代码/变量).
+- **Git**: feat/fix/docs/style/refactor/perf/test/chore.
+- **样式**: Tailwind CSS, CSS Variables for Theme.

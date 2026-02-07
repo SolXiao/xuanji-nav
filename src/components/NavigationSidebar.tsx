@@ -1,14 +1,16 @@
-import React from 'react';
+import { CategoryTree, NavigationItem } from '@/types/nav';
 
 interface NavigationSidebarProps {
+  items: NavigationItem[]; // 用于数据统计
   categories: string[];
-  categoryTree: Record<string, string[]>;
+  categoryTree: CategoryTree;
   activeCategory: string;
   scrollToAnchor: (primary: string, sub?: string) => void;
   getCategoryIcon: (cat: string) => string;
 }
 
 export const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
+  items,
   categories,
   categoryTree,
   activeCategory,
@@ -16,8 +18,30 @@ export const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
   getCategoryIcon
 }) => {
   return (
-    <aside className="lg:w-60 flex-shrink-0">
-      <nav className="sticky top-32 flex lg:flex-col overflow-x-auto lg:overflow-visible gap-1 pb-4 lg:pb-0 scrollbar-hide px-1">
+    <aside className="w-full lg:w-auto">
+      <nav className="sticky top-24 max-h-[calc(100vh-100px)] overflow-y-auto no-scrollbar flex lg:flex-col overflow-x-auto gap-2 pb-4 lg:pb-0 px-1">
+
+        <div className="text-[10px] text-gray-500 font-bold tracking-[0.2em] uppercase mb-2 px-5 hidden lg:block opacity-50">
+          星图导航
+        </div>
+
+        {/* 全部区域置顶入口 */}
+        <button
+          onClick={() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            scrollToAnchor('');
+          }}
+          className={`flex items-center gap-3 px-5 py-3 rounded-xl text-sm transition-all duration-300 text-left border-l-2
+            ${activeCategory === ''
+              ? 'border-[--accent] bg-gradient-to-r from-[--accent]/10 to-transparent text-[--accent-light] font-bold'
+              : 'border-transparent text-gray-400 hover:text-gray-200 hover:bg-white/5'
+            }`}
+        >
+          <span className="text-lg">🌌</span>
+          <span className="truncate">全部星域</span>
+        </button>
+
+        <div className="h-px bg-white/5 my-2 mx-5 hidden lg:block"></div>
         {categories.map(category => {
           const isActive = activeCategory === category;
           const subcats = categoryTree[category] || [];

@@ -2,11 +2,11 @@ import { Client } from '@notionhq/client';
 import { NavigationItem } from '@/types/nav';
 
 const notion = new Client({
-  auth: process.env.NOTION_TOKEN,
+  auth: process.env.NOTION_API_KEY, // 修正环境变量名以匹配 README
 });
 
 export const getDatabase = async (): Promise<NavigationItem[]> => {
-  // Check for Mock Data mode
+  // 检查模拟数据模式
   if (process.env.USE_MOCK_DATA === 'true') {
     const { MOCK_NAVIGATION_ITEMS } = await import('./mockData');
     return MOCK_NAVIGATION_ITEMS;
@@ -28,30 +28,41 @@ export const getDatabase = async (): Promise<NavigationItem[]> => {
         database_id: databaseId,
       });
       break;
-    } catch (error: any) {
-      console.warn(`Attempt ${attempt}/${maxRetries} failed to fetch Notion database:`, error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : '未知错误';
+      console.warn(`第 ${attempt}/${maxRetries} 次获取 Notion 数据库失败:`, errorMessage);
       if (attempt === maxRetries) {
         const { MOCK_NAVIGATION_ITEMS } = await import('./mockData');
         return MOCK_NAVIGATION_ITEMS;
       }
-      // Wait before retrying (1s, 2s...)
+      // 重试前等待 (1s, 2s...)
       await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
     }
   }
 
-  if (!response) return [];
+  // 如果所有重试都失败且没有返回 mock 数据
+  if (!response) {
+    console.warn('Failed to fetch from Notion after retries, returning empty array.');
+    // 再次尝试返回 Mock 数据作为最后的兜底
+    try {
+      const { MOCK_NAVIGATION_ITEMS } = await import('./mockData');
+      return MOCK_NAVIGATION_ITEMS;
+    } catch (e) {
+      return [];
+    }
+  }
 
   try {
     const items = response.results.map((page: any) => {
       const props = page.properties;
 
-      // Safety checks for properties
-      // Assuming standard names: Name, URL, Category, Description
-      // Adjust these based on actual database structure
+      // 属性安全性检查
+      // 假设标准名称：Name, URL, Category, Description
+      // 根据实际数据库结构调整这些名称
 
       const title = props.Name?.title?.[0]?.plain_text ||
         props.Title?.title?.[0]?.plain_text ||
-        'Untitled';
+        '未命名';
 
       const url = props.URL?.url ||
         props.Link?.url ||
@@ -59,13 +70,13 @@ export const getDatabase = async (): Promise<NavigationItem[]> => {
 
       const category = props.Category?.select?.name ||
         props.Tags?.multi_select?.[0]?.name ||
-        'Uncategorized';
+        '未分类';
 
       const subCategory = props.SubCategory?.select?.name || undefined;
 
       const description = props.Description?.rich_text?.[0]?.plain_text || '';
 
-      // Handle icon
+      // 处理图标
       let icon = '';
       if (page.icon?.type === 'emoji') {
         icon = page.icon.emoji;
@@ -100,55 +111,136 @@ export const addItem = async (item: Omit<NavigationItem, 'id'>) => {
     throw new Error('NOTION_DATABASE_ID is not defined');
   }
 
-  try {
-    const properties: any = {
-      Name: {
-        title: [
-          {
-            text: {
-              content: item.title,
-            },
+  // 校验 Icon URL：必须是有效的 http/https 链接
+  let iconObj: any = undefined;
+  if (item.icon && (item.icon.startsWith('http://') || item.icon.startsWith('https://'))) {
+    iconObj = {
+      type: 'external',
+      external: { url: item.icon }
+    };
+  }
+
+  const properties: any = {
+    Name: {
+      title: [
+        {
+          text: {
+            content: item.title,
           },
-        ],
-      },
-      URL: {
-        url: item.url,
-      },
-      Category: {
-        select: {
-          name: item.category,
         },
+      ],
+    },
+    URL: {
+      url: item.url,
+    },
+    Category: {
+      select: {
+        name: item.category,
       },
-      Description: {
-        rich_text: [
-          {
-            text: {
-              content: item.description || '',
-            },
+    },
+    Description: {
+      rich_text: [
+        {
+          text: {
+            content: item.description || '',
           },
-        ],
+        },
+      ],
+    },
+  };
+
+  if (item.subCategory) {
+    properties.SubCategory = {
+      select: {
+        name: item.subCategory,
       },
     };
+  }
 
-    if (item.subCategory) {
-      properties.SubCategory = {
-        select: {
-          name: item.subCategory,
-        },
+  const maxRetries = 3;
+  let lastError: any;
+
+  // 重试逻辑应对网络波动 (ECONNRESET)
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await notion.pages.create({
+        parent: { database_id: databaseId },
+        icon: iconObj,
+        properties: properties,
+      });
+      return response;
+    } catch (error: any) {
+      console.warn(`Attempt ${attempt}/${maxRetries} failed to create Notion page:`, error.message);
+      lastError = error;
+
+      // 如果是 Icon 错误，重试时移除 Icon
+      if (error.message?.includes('icon') || error.code === 'validation_error') {
+        iconObj = undefined;
+        console.warn('Retrying without icon...');
+        continue; // 立即重试，不带 icon
+      }
+
+      // 如果是网络错误，等待后重试
+      if (attempt < maxRetries) {
+        await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+      }
+    }
+  }
+
+  console.error('创建 Notion 页面最终失败:', lastError);
+  throw lastError;
+};
+
+// 更新 Notion 数据库项
+export const updateNotionItem = async (
+  pageId: string,
+  data: {
+    title?: string;
+    url?: string;
+    description?: string;
+    category?: string;
+    icon?: string;
+  }
+): Promise<void> => {
+  try {
+    const properties: any = {};
+
+    if (data.title !== undefined) {
+      properties.Name = {
+        title: [{ text: { content: data.title } }]
       };
     }
 
-    const response = await notion.pages.create({
-      parent: { database_id: databaseId },
-      icon: item.icon ? {
-        type: 'external',
-        external: { url: item.icon }
-      } : undefined,
-      properties: properties,
+    if (data.url !== undefined) {
+      properties.URL = {
+        url: data.url
+      };
+    }
+
+    if (data.description !== undefined) {
+      properties.Description = {
+        rich_text: [{ text: { content: data.description } }]
+      };
+    }
+
+    if (data.category !== undefined) {
+      properties.Category = {
+        select: { name: data.category }
+      };
+    }
+
+    if (data.icon !== undefined) {
+      properties.Icon = {
+        rich_text: [{ text: { content: data.icon } }]
+      };
+    }
+
+    await notion.pages.update({
+      page_id: pageId,
+      properties
     });
-    return response;
   } catch (error) {
-    console.error('Error creating Notion page:', error);
+    console.error('Error updating Notion item:', error);
     throw error;
   }
 };

@@ -68,42 +68,51 @@ export const NAV_TAXONOMY: Record<string, { subs: Record<string, string[]>, main
 /**
  * 25+ 搜索引擎矩阵
  */
-export const SEARCH_ENGINES = [
+export interface SearchEngine {
+  id: string;
+  name: string;
+  icon: string;
+  url: string;
+  category: string;
+  prefix?: string;
+}
+
+export const SEARCH_ENGINES: SearchEngine[] = [
   // General
-  { id: 'google', name: 'Google', icon: '🔍', url: 'https://www.google.com/search?q=', category: 'General' },
-  { id: 'baidu', name: '百度', icon: '🐾', url: 'https://www.baidu.com/s?wd=', category: 'General' },
-  { id: 'bing', name: 'Bing', icon: '🦋', url: 'https://www.bing.com/search?q=', category: 'General' },
-  { id: 'duckduckgo', name: 'DuckDuckGo', icon: '🦆', url: 'https://duckduckgo.com/?q=', category: 'General' },
+  { id: 'google', name: 'Google', icon: '🔍', url: 'https://www.google.com/search?q=', category: 'General', prefix: 'g' },
+  { id: 'baidu', name: '百度', icon: '🐾', url: 'https://www.baidu.com/s?wd=', category: 'General', prefix: 'bd' },
+  { id: 'bing', name: 'Bing', icon: '🦋', url: 'https://www.bing.com/search?q=', category: 'General', prefix: 'b' },
+  { id: 'duckduckgo', name: 'DuckDuckGo', icon: '🦆', url: 'https://duckduckgo.com/?q=', category: 'General', prefix: 'd' },
 
   // Tech & Dev
-  { id: 'github', name: 'GitHub', icon: '🐙', url: 'https://github.com/search?q=', category: 'Tech' },
-  { id: 'stackoverflow', name: 'StackOverflow', icon: '🥞', url: 'https://stackoverflow.com/search?q=', category: 'Tech' },
-  { id: 'mdn', name: 'MDN Web Docs', icon: '🦊', url: 'https://developer.mozilla.org/zh-CN/search?q=', category: 'Tech' },
-  { id: 'npm', name: 'npm', icon: '📦', url: 'https://www.npmjs.com/search?q=', category: 'Tech' },
-  { id: 'pypi', name: 'PyPI', icon: '🐍', url: 'https://pypi.org/search/?q=', category: 'Tech' },
-  { id: 'dockerhub', name: 'Docker Hub', icon: '🐳', url: 'https://hub.docker.com/search?q=', category: 'Tech' },
+  { id: 'github', name: 'GitHub', icon: '🐙', url: 'https://github.com/search?q=', category: 'Tech', prefix: 'gh' },
+  { id: 'stackoverflow', name: 'StackOverflow', icon: '🥞', url: 'https://stackoverflow.com/search?q=', category: 'Tech', prefix: 'so' },
+  { id: 'mdn', name: 'MDN Web Docs', icon: '🦊', url: 'https://developer.mozilla.org/zh-CN/search?q=', category: 'Tech', prefix: 'mdn' },
+  { id: 'npm', name: 'npm', icon: '📦', url: 'https://www.npmjs.com/search?q=', category: 'Tech', prefix: 'npm' },
+  { id: 'pypi', name: 'PyPI', icon: '🐍', url: 'https://pypi.org/search/?q=', category: 'Tech', prefix: 'py' },
+  { id: 'dockerhub', name: 'Docker Hub', icon: '🐳', url: 'https://hub.docker.com/search?q=', category: 'Tech', prefix: 'dk' },
 
   // Community & Social
-  { id: 'v2ex', name: 'V2EX', icon: '⚡', url: 'https://www.google.com/search?q=site:v2ex.com/t%20', category: 'Community' },
-  { id: 'reddit', name: 'Reddit', icon: '👽', url: 'https://www.reddit.com/search/?q=', category: 'Community' },
-  { id: 'juejin', name: '稀土掘金', icon: '💎', url: 'https://juejin.cn/search?query=', category: 'Community' },
-  { id: 'zhihu', name: '知乎', icon: '🌀', url: 'https://www.zhihu.com/search?type=content&q=', category: 'Community' },
-  { id: 'weibo', name: '微博', icon: '👁️', url: 'https://s.weibo.com/weibo?q=', category: 'Community' },
+  { id: 'v2ex', name: 'V2EX', icon: '⚡', url: 'https://www.v2ex.com/search?q=', category: 'Community', prefix: 'v' },
+  { id: 'reddit', name: 'Reddit', icon: '👽', url: 'https://www.reddit.com/search/?q=', category: 'Community', prefix: 'rd' },
+  { id: 'juejin', name: '稀土掘金', icon: '💎', url: 'https://juejin.cn/search?query=', category: 'Community', prefix: 'jj' },
+  { id: 'zhihu', name: '知乎', icon: '🌀', url: 'https://www.zhihu.com/search?type=content&q=', category: 'Community', prefix: 'zh' },
+  { id: 'weibo', name: '微博', icon: '👁️', url: 'https://s.weibo.com/weibo?q=', category: 'Community', prefix: 'wb' },
 
   // Media
-  { id: 'bilibili', name: 'Bilibili', icon: '📺', url: 'https://search.bilibili.com/all?keyword=', category: 'Media' },
-  { id: 'youtube', name: 'YouTube', icon: '🎬', url: 'https://www.youtube.com/results?search_query=', category: 'Media' },
-  { id: 'deepl', name: 'DeepL Translate', icon: '🌐', url: 'https://www.deepl.com/translator#any/any/', category: 'Media' },
-  { id: 'xiaohongshu', name: '小红书', icon: '📕', url: 'https://www.xiaohongshu.com/search_result?keyword=', category: 'Media' },
+  { id: 'bilibili', name: 'Bilibili', icon: '📺', url: 'https://search.bilibili.com/all?keyword=', category: 'Media', prefix: 'bi' },
+  { id: 'youtube', name: 'YouTube', icon: '🎬', url: 'https://www.youtube.com/results?search_query=', category: 'Media', prefix: 'yt' },
+  { id: 'deepl', name: 'DeepL Translate', icon: '🌐', url: 'https://www.deepl.com/translator#any/any/', category: 'Media', prefix: 'tl' },
+  { id: 'xiaohongshu', name: '小红书', icon: '📕', url: 'https://www.xiaohongshu.com/search_result?keyword=', category: 'Media', prefix: 'xhs' },
 
   // Academic & Resources
-  { id: 'arxiv', name: 'arXiv', icon: '📓', url: 'https://arxiv.org/search/?query=', category: 'Academic' },
-  { id: 'googlescholar', name: 'Google Scholar', icon: '🎓', url: 'https://scholar.google.com/scholar?q=', category: 'Academic' },
-  { id: 'wikipedia', name: 'Wikipedia', icon: '📖', url: 'https://zh.wikipedia.org/wiki/Special:Search?search=', category: 'Academic' },
-  { id: 'libgen', name: 'LibGen', icon: '📚', url: 'https://libgen.is/search.php?req=', category: 'Academic' },
+  { id: 'arxiv', name: 'arXiv', icon: '📓', url: 'https://arxiv.org/search/?query=', category: 'Academic', prefix: 'ax' },
+  { id: 'googlescholar', name: 'Google Scholar', icon: '🎓', url: 'https://scholar.google.com/scholar?q=', category: 'Academic', prefix: 'gs' },
+  { id: 'wikipedia', name: 'Wikipedia', icon: '📖', url: 'https://zh.wikipedia.org/wiki/Special:Search?search=', category: 'Academic', prefix: 'wk' },
+  { id: 'libgen', name: 'LibGen', icon: '📚', url: 'https://libgen.is/search.php?req=', category: 'Academic', prefix: 'lg' },
 
   // Design
-  { id: 'figma', name: 'Figma Community', icon: '🎨', url: 'https://www.figma.com/community/search?resource_type=mixed&sort_by=popular&query=', category: 'Design' },
-  { id: 'dribbble', name: 'Dribbble', icon: '🏀', url: 'https://dribbble.com/search/', category: 'Design' },
-  { id: 'behance', name: 'Behance', icon: '🅱️', url: 'https://www.behance.net/search/projects?search=', category: 'Design' },
+  { id: 'figma', name: 'Figma Community', icon: '🎨', url: 'https://www.figma.com/community/search?resource_type=mixed&sort_by=popular&query=', category: 'Design', prefix: 'fg' },
+  { id: 'dribbble', name: 'Dribbble', icon: '🏀', url: 'https://dribbble.com/search/', category: 'Design', prefix: 'dr' },
+  { id: 'behance', name: 'Behance', icon: '🅱️', url: 'https://www.behance.net/search/projects?search=', category: 'Design', prefix: 'bh' },
 ];
