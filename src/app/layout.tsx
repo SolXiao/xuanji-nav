@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import NextTopLoader from "nextjs-toploader";
 import { ToastProvider } from "@/components/providers/toast-provider";
+import { SearchProvider } from "@/context/SearchContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -54,8 +55,10 @@ export default function RootLayout({
           color="#3b82f6"
           showSpinner={false}
         />
-        <ToastProvider />
-        {children}
+        <SearchProvider>
+          <ToastProvider />
+          {children}
+        </SearchProvider>
       </body>
     </html>
   );
